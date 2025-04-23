@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reaction Time Test</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #e0e0e0;
+      --accent-color: #bb86fc;
+      --success-color: #03dac6;
+      --error-color: #cf6679;
+      --warning-color: #ff9800;
+      --neutral-color: #3a3a3a;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: all 0.3s ease;
+    }
+    
+    .container {
+      text-align: center;
+      max-width: 800px;
+      padding: 20px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    h1 {
+      color: var(--accent-color);
+      margin-bottom: 20px;
+      font-size: 2.5rem;
+      text-shadow: 0 0 10px rgba(187, 134, 252, 0.3);
+    }
+    
+    .box {
+      width: 300px;
+      height: 300px;
+      margin: 20px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 15px;
+      user-select: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    
+    .waiting {
+      background-color: var(--error-color);
+      transform: scale(0.98);
+    }
+    
+    .ready {
+      background-color: var(--success-color);
+      transform: scale(1.02);
+      box-shadow: 0 0 30px rgba(3, 218, 198, 0.5);
+    }
+    
+    .too-soon {
+      background-color: var(--warning-color);
+    }
+    
+    .idle {
+      background-color: var(--neutral-color);
+    }
+    
+    #results {
+      margin-top: 20px;
+      font-size: 20px;
+      min-height: 30px;
+      color: var(--text-color);
+    }
+    
+    .card {
+      margin: 15px 0;
+      padding: 20px;
+      background-color: var(--card-bg);
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    button {
+      padding: 12px 25px;
+      background-color: var(--accent-color);
+      color: #121212;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 10px 5px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    button:active {
+      transform: translateY(1px);
+    }
+    
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .stat-card {
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 10px 0;
+      color: var(--accent-color);
+    }
+    
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    
+    .progress-container {
+      height: 8px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      margin: 15px 0;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background-color: var(--accent-color);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    
+    .history-container {
+      max-height: 200px;
+      overflow-y: auto;
+      padding-right: 10px;
+      margin-top: 15px;
+    }
+    
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .rating {
+      font-weight: bold;
+    }
+    
+    .excellent {
+      color: #03dac6;
+    }
+    
+    .good {
+      color: #bb86fc;
+    }
+    
+    .average {
+      color: #ffffff;
+    }
+    
+    .slow {
+      color: #ff9800;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    @media (max-width: 600px) {
+      .box {
+        width: 250px;
+        height: 250px;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .mode-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: 2px solid var(--accent-color);
+      color: var(--accent-color);
+      padding: 8px 15px;
+      border-radius: 20px;
+    }
+
+    .difficulty-selector {
+      margin-bottom: 20px;
+    }
+    
+    .difficulty-btn {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--text-color);
+      border: none;
+      padding: 8px 15px;
+      margin: 0 5px;
+      border-radius: 20px;
+    }
+    
+    .difficulty-btn.active {
+      background-color: var(--accent-color);
+      color: #121212;
+    }
+    
+    .settings-icon {
+      cursor: pointer;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 24px;
+      color: var(--text-color);
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 10;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      background-color: var(--card-bg);
+      padding: 25px;
+      border-radius: 15px;
+      max-width: 500px;
+      width: 90%;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .close {
+      font-size: 24px;
+      cursor: pointer;
+    }
+    
+    .countdown {
+      position: absolute;
+      font-size: 120px;
+      color: var(--accent-color);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    
+    .pulse {
+      animation: pulse 0.5s;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="mode-toggle" id="modeToggle">Light Mode</button>
+    <div class="settings-icon" id="settingsBtn">⚙️</div>
+    
+    <h1>Reaction Time Test</h1>
+    
+    <div class="card">
+      <p>Test your reflexes! Click the box when it turns green. Try to react as quickly as possible!</p>
+      <div class="difficulty-selector">
+        <button class="difficulty-btn active" data-difficulty="normal">Normal</button>
+        <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+        <button class="difficulty-btn" data-difficulty="expert">Expert</button>
+      </div>
+      <button id="startButton">Start Test</button>
+    </div>
+    
+    <div id="box" class="box idle">Click when green</div>
+    <div id="countdown" class="countdown">3</div>
+    
+    <div id="results"></div>
+    
+    <div class="card" id="statsCard" style="display: none;">
+      <h2>Your Performance</h2>
+      
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Attempts</div>
+          <div class="stat-value" id="attempts">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Average Time</div>
+          <div class="stat-value" id="average">0 ms</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Best Time</div>
+          <div class="stat-value" id="best">0 ms</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Your Rating</div>
+          <div class="stat-value" id="rating">-</div>
+        </div>
+      </div>
+      
+      <h3>Recent History</h3>
+      <div class="history-container" id="history">
+        <!-- History items will be added here -->
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <span class="close" id="closeModal">&times;</span>
+      </div>
+      
+      <div>
+        <h3>Test Options</h3>
+        <div>
+          <label>
+            <input type="checkbox" id="soundToggle" checked>
+            Enable sounds
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox" id="falseStartToggle" checked>
+            Penalize false starts
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox" id="countdownToggle" checked>
+            Show countdown
+          </label>
+        </div>
+        
+        <h3>Visual Customization</h3>
+        <div>
+          <label>
+            Accent Color:
+            <select id="accentColor">
+              <option value="#bb86fc">Purple</option>
+              <option value="#03dac6">Teal</option>
+              <option value="#cf6679">Rose</option>
+              <option value="#ff9800">Orange</option>
+              <option value="#64ffda">Mint</option>
+            </select>
+          </label>
+        </div>
+        
+        <button id="saveSettings" style="margin-top: 20px">Save Settings</button>
+        <button id="resetStats" style="background-color: var(--error-color)">Reset All Stats</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const box = document.getElementById('box');
+    const results = document.getElementById('results');
+    const startButton = document.getElementById('startButton');
+    const statsCard = document.getElementById('statsCard');
+    const attemptsSpan = document.getElementById('attempts');
+    const averageSpan = document.getElementById('average');
+    const bestSpan = document.getElementById('best');
+    const ratingSpan = document.getElementById('rating');
+    const progressBar = document.getElementById('progressBar');
+    const historyContainer = document.getElementById('history');
+    const modeToggle = document.getElementById('modeToggle');
+    const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+    const countdownElem = document.getElementById('countdown');
+    
+    // Settings elements
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeModal = document.getElementById('closeModal');
+    const soundToggle = document.getElementById('soundToggle');
+    const falseStartToggle = document.getElementById('falseStartToggle');
+    const countdownToggle = document.getElementById('countdownToggle');
+    const accentColorSelect = document.getElementById('accentColor');
+    const saveSettingsBtn = document.getElementById('saveSettings');
+    const resetStatsBtn = document.getElementById('resetStats');
+    
+    let state = 'idle';
+    let startTime;
+    let timeoutId;
+    let countdownIntervalId;
+    let times = [];
+    let difficulty = 'normal';
+    let settings = {
+      soundEnabled: true,
+      penalizeFalseStarts: true,
+      showCountdown: true,
+      accentColor: '#bb86fc',
+      darkMode: true
+    };
+    
+    // Load saved times and settings from localStorage
+    function loadSavedData() {
+      const savedTimes = localStorage.getItem('reactionTimes');
+      if (savedTimes) {
+        times = JSON.parse(savedTimes);
+        if (times.length > 0) {
+          updateStats();
+          statsCard.style.display = 'block';
+        }
+      }
+      
+      const savedSettings = localStorage.getItem('reactionSettings');
+      if (savedSettings) {
+        settings = JSON.parse(savedSettings);
+        
+        // Apply settings to UI
+        soundToggle.checked = settings.soundEnabled;
+        falseStartToggle.checked = settings.penalizeFalseStarts;
+        countdownToggle.checked = settings.showCountdown;
+        accentColorSelect.value = settings.accentColor;
+        
+        // Apply accent color
+        document.documentElement.style.setProperty('--accent-color', settings.accentColor);
+        
+        // Apply theme
+        if (!settings.darkMode) {
+          toggleTheme();
+        }
+      }
+    }
+    
+    // Save times to localStorage
+    function saveTimes() {
+      localStorage.setItem('reactionTimes', JSON.stringify(times));
+    }
+    
+    // Save settings to localStorage
+    function saveSettings() {
+      localStorage.setItem('reactionSettings', JSON.stringify(settings));
+    }
+    
+    // Create and play sound
+    function playSound(freq, duration, volume) {
+      if (!settings.soundEnabled) return;
+      
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.value = freq;
+      gainNode.gain.value = volume;
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      setTimeout(() => {
+        oscillator.stop();
+      }, duration);
+    }
+    
+    function toggleTheme() {
+      settings.darkMode = !settings.darkMode;
+      
+      if (settings.darkMode) {
+        document.documentElement.style.setProperty('--bg-color', '#121212');
+        document.documentElement.style.setProperty('--card-bg', '#1e1e1e');
+        document.documentElement.style.setProperty('--text-color', '#e0e0e0');
+        modeToggle.textContent = 'Light Mode';
+      } else {
+        document.documentElement.style.setProperty('--bg-color', '#f5f5f5');
+        document.documentElement.style.setProperty('--card-bg', '#ffffff');
+        document.documentElement.style.setProperty('--text-color', '#121212');
+        modeToggle.textContent = 'Dark Mode';
+      }
+      
+      saveSettings();
+    }
+    
+    function startTest() {
+      if (state !== 'idle') return;
+      
+      startButton.disabled = true;
+      box.className = 'box waiting';
+      box.textContent = 'Wait for green...';
+      state = 'waiting';
+      
+      // Different delay ranges based on difficulty
+      let minDelay, maxDelay;
+      switch (difficulty) {
+        case 'hard':
+          minDelay = 800;
+          maxDelay = 3000;
+          break;
+        case 'expert':
+          minDelay = 500;
+          maxDelay = 2500;
+          break;
+        default: // normal
+          minDelay = 1000;
+          maxDelay = 4000;
+      }
+      
+      // Random delay
+      const delay = Math.floor(Math.random() * (maxDelay - minDelay)) + minDelay;
+      
+      // Show countdown if enabled
+      if (settings.showCountdown) {
+        let count = 3;
+        countdownElem.textContent = count;
+        countdownElem.style.opacity = '1';
+        
+        countdownIntervalId = setInterval(() => {
+          count--;
+          if (count >= 1) {
+            countdownElem.textContent = count;
+            countdownElem.classList.add('pulse');
+            setTimeout(() => countdownElem.classList.remove('pulse'), 500);
+            playSound(440, 100, 0.2);
+          } else {
+            clearInterval(countdownIntervalId);
+            countdownElem.style.opacity = '0';
+          }
+        }, 1000);
+      }
+      
+      timeoutId = setTimeout(() => {
+        box.className = 'box ready';
+        box.textContent = 'CLICK NOW!';
+        state = 'ready';
+        startTime = Date.now();
+        playSound(880, 200, 0.3);
+      }, delay);
+    }
+    
+    function handleBoxClick() {
+      if (state === 'idle') {
+        return;
+      } else if (state === 'waiting') {
+        // Clicked too soon
+        clearTimeout(timeoutId);
+        clearInterval(countdownIntervalId);
+        countdownElem.style.opacity = '0';
+        
+        box.className = 'box too-soon';
+        box.textContent = 'Too soon! Try again.';
+        results.textContent = 'You clicked too early!';
+        state = 'idle';
+        startButton.disabled = false;
+        
+        playSound(220, 300, 0.3);
+        
+        // Add penalty time if enabled
+        if (settings.penalizeFalseStarts) {
+          times.push(500); // 500ms penalty
+          updateStats();
+          addHistoryItem(500, true);
+          saveTimes();
+        }
+      } else if (state === 'ready') {
+        // Measure reaction time
+        const endTime = Date.now();
+        const reactionTime = endTime - startTime;
+        times.push(reactionTime);
+        
+        // Update stats
+        updateStats();
+        addHistoryItem(reactionTime);
+        saveTimes();
+        
+        // Show result
+        box.className = 'box';
+        box.textContent = `${reactionTime} ms - Click anywhere to continue`;
+        
+        // Play sound based on performance
+        if (reactionTime < 200) {
+          playSound(1200, 200, 0.3);
+        } else if (reactionTime < 300) {
+          playSound(1000, 200, 0.3);
+        } else {
+          playSound(700, 200, 0.3);
+        }
+        
+        // Show rating
+        const rating = getRating(reactionTime);
+        results.innerHTML = `Your reaction time: <span class="${rating.class}">${reactionTime} milliseconds (${rating.text})</span>`;
+        
+        state = 'result';
+      } else if (state === 'result') {
+        // Reset for next attempt
+        box.className = 'box idle';
+        box.textContent = 'Click when green';
+        results.textContent = '';
+        state = 'idle';
+        startButton.disabled = false;
+      }
+    }
+    
+    function updateStats() {
+      statsCard.style.display = 'block';
+      attemptsSpan.textContent = times.length;
+      
+      // Calculate average
+      const sum = times.reduce((acc, time) => acc + time, 0);
+      const average = Math.round(sum / times.length);
+      averageSpan.textContent = `${average} ms`;
+      
+      // Get best time
+      const best = Math.min(...times);
+      bestSpan.textContent = `${best} ms`;
+      
+      // Set rating
+      const rating = getRating(average);
+      ratingSpan.textContent = rating.text;
+      ratingSpan.className = `stat-value ${rating.class}`;
+      
+      // Update progress bar (percentile based on average)
+      let percentile;
+      if (average < 200) {
+        percentile = 90;
+      } else if (average < 250) {
+        percentile = 80;
+      } else if (average < 300) {
+        percentile = 60;
+      } else if (average < 350) {
+        percentile = 40;
+      } else if (average < 400) {
+        percentile = 20;
+      } else {
+        percentile = 10;
+      }
+      
+      progressBar.style.width = `${percentile}%`;
+    }
+    
+    function getRating(time) {
+      if (time < 180) {
+        return { text: 'Excellent!', class: 'excellent' };
+      } else if (time < 250) {
+        return { text: 'Great!', class: 'good' };
+      } else if (time < 350) {
+        return { text: 'Average', class: 'average' };
+      } else {
+        return { text: 'Slow', class: 'slow' };
+      }
+    }
+    
+    function addHistoryItem(time, isFalseStart = false) {
+      // Keep only the last 10 attempts
+      if (historyContainer.children.length >= 10) {
+        historyContainer.removeChild(historyContainer.lastChild);
+      }
+      
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      
+      const timeText = document.createElement('span');
+      timeText.textContent = isFalseStart ? 'False Start (500ms penalty)' : `${time} ms`;
+      
+      const ratingText = document.createElement('span');
+      if (!isFalseStart) {
+        const rating = getRating(time);
+        ratingText.textContent = rating.text;
+        ratingText.className = `rating ${rating.class}`;
+      } else {
+        ratingText.textContent = 'Penalty';
+        ratingText.className = 'rating slow';
+      }
+      
+      item.appendChild(timeText);
+      item.appendChild(ratingText);
+      
+      // Insert at the beginning
+      historyContainer.insertBefore(item, historyContainer.firstChild);
+    }
+    
+    // Set difficulty mode
+    function setDifficulty(newDifficulty) {
+      difficulty = newDifficulty;
+      
+      // Update UI
+      difficultyBtns.forEach(btn => {
+        if (btn.dataset.difficulty === difficulty) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+    
+    // Event listeners
+    startButton.addEventListener('click', startTest);
+    box.addEventListener('click', handleBoxClick);
+    modeToggle.addEventListener('click', toggleTheme);
+    
+    difficultyBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        setDifficulty(btn.dataset.difficulty);
+      });
+    });
+    
+    // Settings modal
+    settingsBtn.addEventListener('click', () => {
+      settingsModal.style.display = 'flex';
+    });
+    
+    closeModal.addEventListener('click', () => {
+      settingsModal.style.display = 'none';
+    });
+    
+    saveSettingsBtn.addEventListener('click', () => {
+      settings.soundEnabled = soundToggle.checked;
+      settings.penalizeFalseStarts = falseStartToggle.checked;
+      settings.showCountdown = countdownToggle.checked;
+      settings.accentColor = accentColorSelect.value;
+      
+      // Apply accent color
+      document.documentElement.style.setProperty('--accent-color', settings.accentColor);
+      
+      saveSettings();
+      settingsModal.style.display = 'none';
+    });
+    
+    resetStatsBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to reset all your stats?')) {
+        times = [];
+        saveTimes();
+        historyContainer.innerHTML = '';
+        statsCard.style.display = 'none';
+        results.textContent = '';
+      }
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+      if (event.target === settingsModal) {
+        settingsModal.style.display = 'none';
+      }
+    });
+    
+    // Load saved data on page load
+    loadSavedData();
+  </script>
+</body>
+</html>
