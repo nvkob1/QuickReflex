@@ -227,17 +227,6 @@
       }
     }
     
-    .mode-toggle {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: none;
-      border: 2px solid var(--accent-color);
-      color: var(--accent-color);
-      padding: 8px 15px;
-      border-radius: 20px;
-    }
-
     .difficulty-selector {
       margin-bottom: 20px;
     }
@@ -319,7 +308,6 @@
 </head>
 <body>
   <div class="container">
-    <button class="mode-toggle" id="modeToggle">Light Mode</button>
     <div class="settings-icon" id="settingsBtn">⚙️</div>
     
     <h1>Reaction Time Test</h1>
@@ -431,7 +419,6 @@
     const ratingSpan = document.getElementById('rating');
     const progressBar = document.getElementById('progressBar');
     const historyContainer = document.getElementById('history');
-    const modeToggle = document.getElementById('modeToggle');
     const difficultyBtns = document.querySelectorAll('.difficulty-btn');
     const countdownElem = document.getElementById('countdown');
     
@@ -456,8 +443,7 @@
       soundEnabled: true,
       penalizeFalseStarts: true,
       showCountdown: true,
-      accentColor: '#bb86fc',
-      darkMode: true
+      accentColor: '#bb86fc'
     };
     
     // Load saved times and settings from localStorage
@@ -473,7 +459,13 @@
       
       const savedSettings = localStorage.getItem('reactionSettings');
       if (savedSettings) {
-        settings = JSON.parse(savedSettings);
+        const loadedSettings = JSON.parse(savedSettings);
+        
+        // Only load compatible settings, ignoring any theme/dark mode settings
+        settings.soundEnabled = loadedSettings.soundEnabled !== undefined ? loadedSettings.soundEnabled : true;
+        settings.penalizeFalseStarts = loadedSettings.penalizeFalseStarts !== undefined ? loadedSettings.penalizeFalseStarts : true;
+        settings.showCountdown = loadedSettings.showCountdown !== undefined ? loadedSettings.showCountdown : true;
+        settings.accentColor = loadedSettings.accentColor || '#bb86fc';
         
         // Apply settings to UI
         soundToggle.checked = settings.soundEnabled;
@@ -483,11 +475,6 @@
         
         // Apply accent color
         document.documentElement.style.setProperty('--accent-color', settings.accentColor);
-        
-        // Apply theme
-        if (!settings.darkMode) {
-          toggleTheme();
-        }
       }
     }
     
@@ -520,24 +507,6 @@
       setTimeout(() => {
         oscillator.stop();
       }, duration);
-    }
-    
-    function toggleTheme() {
-      settings.darkMode = !settings.darkMode;
-      
-      if (settings.darkMode) {
-        document.documentElement.style.setProperty('--bg-color', '#121212');
-        document.documentElement.style.setProperty('--card-bg', '#1e1e1e');
-        document.documentElement.style.setProperty('--text-color', '#e0e0e0');
-        modeToggle.textContent = 'Light Mode';
-      } else {
-        document.documentElement.style.setProperty('--bg-color', '#f5f5f5');
-        document.documentElement.style.setProperty('--card-bg', '#ffffff');
-        document.documentElement.style.setProperty('--text-color', '#121212');
-        modeToggle.textContent = 'Dark Mode';
-      }
-      
-      saveSettings();
     }
     
     function startTest() {
@@ -754,7 +723,6 @@
     // Event listeners
     startButton.addEventListener('click', startTest);
     box.addEventListener('click', handleBoxClick);
-    modeToggle.addEventListener('click', toggleTheme);
     
     difficultyBtns.forEach(btn => {
       btn.addEventListener('click', () => {
